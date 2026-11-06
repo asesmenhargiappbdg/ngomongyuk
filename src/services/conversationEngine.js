@@ -1,124 +1,121 @@
 import { getPhoneticGuide } from './phonetics';
 
 /**
- * Intelligent Conversation Engine with both Local Smart Matching and Gemini API integration
+ * Intelligent Conversation Engine with Proactive Storytelling
+ * Designed specifically for beginners who give short or simple answers
  */
 
-// Common dialogue knowledge base for local offline learning
 const KNOWLEDGE_BASE = [
   {
-    keywords: ['halo', 'hai', 'pagi', 'siang', 'sore', 'malam', 'apa kabar', 'kabar baik', 'hello', 'hi'],
-    englishTranslation: "Hello! How are you doing today?",
-    phonetic: "He-low! Hau ar yu du-ing tu-dey?",
+    keywords: ['ya', 'iya', 'yes', 'yup', 'betul', 'benar', 'oke', 'ok', 'siap', 'setuju'],
+    englishTranslation: "Yes, absolutely! I completely agree with you.",
+    phonetic: "Yes, eb-so-lut-li! Ay kom-pliit-li e-grii with yu.",
     vocab: [
-      { word: "Hello", meaning: "Halo" },
-      { word: "How are you", meaning: "Bagaimana kabarmu" },
-      { word: "Today", meaning: "Hari ini" }
+      { word: "Absolutely", meaning: "Tentu saja / Pasti" },
+      { word: "Agree", meaning: "Setuju" }
     ],
-    aiReplyEn: "Hi there! I'm doing great, thank you for asking! How is your day going so far?",
-    aiReplyId: "Halo! Kabar saya sangat baik, terima kasih sudah bertanya! Bagaimana harimu sejauh ini?",
-    suggestedReply: "I am doing well, thank you! (Kabar saya baik, terima kasih!)"
+    aiReplyEn: "That's wonderful! Having a positive attitude makes everything so much easier. You know, I was just reading an interesting story about how saying 'yes' to small daily challenges can change your life. Speaking of which, what is one fun thing you are looking forward to doing this week?",
+    aiReplyId: "Keren banget! Punya sikap positif bikin segalanya jadi jauh lebih mudah. Tahu nggak, tadi saya baru baca cerita seru tentang gimana kebiasaan bilang 'ya' untuk tantangan kecil bisa mengubah hidup kita. Ngomong-ngomong, ada satu hal seru apa yang paling kamu tunggu-tunggu minggu ini?",
+    suggestedReplies: [
+      "I want to relax and watch movies. (Saya mau santai nonton film.)",
+      "I'm planning to hang out with friends. (Saya ada rencana kumpul bareng teman.)",
+      "Just spending quiet time at home. (Cuma mau istirahat tenang di rumah.)"
+    ]
+  },
+  {
+    keywords: ['tidak', 'nggak', 'gak', 'bukan', 'no', 'nope', 'belum', 'enggak'],
+    englishTranslation: "No, not really. I haven't done that yet.",
+    phonetic: "Now, not rii-li. Ay he-vent dan det yet.",
+    vocab: [
+      { word: "Not really", meaning: "Nggak juga / Belum terlalu" },
+      { word: "Haven't yet", meaning: "Belum pernah" }
+    ],
+    aiReplyEn: "Haha, no worries at all! That is totally fine. Sometimes taking things slowly and saying 'no' is the best choice! It actually reminds me of how people approach new hobbies—some jump right in, while others prefer to take their time. What kind of activities do you usually enjoy the most when you want to relax?",
+    aiReplyId: "Haha sama sekali nggak masalah! Santai saja. Kadang melangkah pelan dan bilang 'belum' itu pilihan yang sangat wajar! Ini bikin saya teringat gimana orang memulai hobi baru—ada yang langsung buru-buru, ada yang santai menikmati prosesnya. Kalau kamu sendiri, kegiatan apa yang paling kamu nikmati pas lagi pengen rileks?",
+    suggestedReplies: [
+      "Listening to acoustic music. (Mendengarkan musik akustik santai.)",
+      "Taking a slow walk outside. (Jalan-jalan santai di luar.)",
+      "Playing casual mobile games. (Main game santai di HP.)"
+    ]
+  },
+  {
+    keywords: ['kopi', 'coffee', 'teh', 'tea', 'latte', 'dingin', 'iced', 'panas', 'hot', 'minum', 'cangkir'],
+    englishTranslation: "I'd love an iced latte, please. Coffee always brightens my day!",
+    phonetic: "Ayd lav en ayst la-tey, pliiz. Ko-fi ol-weyz brayt-ens may dey!",
+    vocab: [
+      { word: "I'd love", meaning: "Saya sangat ingin (sopan & ramah)" },
+      { word: "Brightens", meaning: "Mencerahkan / Membuat semangat" }
+    ],
+    aiReplyEn: "Oh, iced coffee is an absolute lifesaver! Fun fact: Did you know that coffee culture in cities like Melbourne and Seattle is huge, and people judge a cafe by how smooth their milk foam is? I love the aroma of fresh beans. Tell me, do you usually drink coffee first thing in the morning, or do you prefer an afternoon coffee break?",
+    aiReplyId: "Wah, es kopi itu penyelamat suasana hati banget! Fakta seru: tahu nggak kalau budaya ngopi di kota kayak Melbourne itu kental banget sampai orang menilai kafe dari kelembutan busa susunya? Saya suka banget aroma biji kopi segar. Ceritain dong, kamu biasanya ngopi pertama kali pas bangun pagi, atau lebih suka pas istirahat sore?",
+    suggestedReplies: [
+      "First thing in the morning! (Pagi-pagi wajib ngopi dulu!)",
+      "In the afternoon to beat sleepiness. (Pas sore buat ngusir ngantuk.)",
+      "I actually prefer sweet iced tea! (Sebenarnya saya lebih suka es teh manis!)"
+    ]
+  },
+  {
+    keywords: ['capek', 'lelah', 'tired', 'exhausted', 'ngantuk', 'sleepy', 'pusing', 'istirahat'],
+    englishTranslation: "I feel quite exhausted today. It has been a very long day.",
+    phonetic: "Ay fiil kwayt eg-zos-ted tu-dey. It hez biin e ve-ri long dey.",
+    vocab: [
+      { word: "Exhausted", meaning: "Sangat lelah / Capek sekali" },
+      { word: "Long day", meaning: "Hari yang melelahkan / padat" }
+    ],
+    aiReplyEn: "Aww, I hear you! Take a deep breath. You've worked so hard today, and you should be proud of yourself. Whenever I feel drained, my favorite ritual is taking a warm shower, putting my phone away, and having some soothing chamomile tea. What is your go-to routine when you need to recharge your energy?",
+    aiReplyId: "Aduh, saya paham banget! Tarik napas panjang dulu ya. Kamu sudah berjuang keras hari ini dan layak dapat istirahat. Kalau saya lagi capek banget, ritual favorit saya itu mandi air hangat, jauhin HP sebentar, terus minum teh hangat. Kalau kamu, apa cara paling ampuh buat balikin energimu?",
+    suggestedReplies: [
+      "Sleeping for eight hours straight! (Tidur nyenyak 8 jam tanpa diganggu!)",
+      "Eating hot delicious soup! (Makan sup hangat yang lezat!)",
+      "Lying down and listening to calm songs. (Rebahan sambil dengar lagu tenang.)"
+    ]
+  },
+  {
+    keywords: ['makan', 'lapar', 'food', 'hungry', 'restoran', 'enak', 'delicious', 'kenyang'],
+    englishTranslation: "I'm getting really hungry. Good food always makes me happy!",
+    phonetic: "Aym get-ting rii-li hang-gri. Gud fud ol-weyz meyks mi he-pi!",
+    vocab: [
+      { word: "Getting hungry", meaning: "Mulai lapar" },
+      { word: "Makes me happy", meaning: "Membuatku senang" }
+    ],
+    aiReplyEn: "Food is hands down the best topic in the world! You know, Indonesian food like Rendang and Satay are famous globally for their rich spices. I love talking about comfort food. If you could have any meal right now in front of you without cooking, what would you pick?",
+    aiReplyId: "Makanan itu topik obrolan paling menyenangkan sedunia! Tahu nggak, masakan Indonesia kayak Rendang dan Sate itu terkenal banget di luar negeri karena rempahnya yang kaya. Kalau sekarang ada makanan ajaib yang langsung tersaji di depanmu tanpa perlu masak, kamu mau pilih apa?",
+    suggestedReplies: [
+      "A warm bowl of chicken noodles! (Semangkuk mie ayam hangat!)",
+      "Crispy fried chicken with chili! (Ayam goreng renyah pakai sambal!)",
+      "Savory beef rendang with rice! (Rendang sapi gurih pakai nasi hangat!)"
+    ]
+  },
+  {
+    keywords: ['halo', 'hai', 'hello', 'hi', 'pagi', 'siang', 'sore', 'malam', 'apa kabar', 'kabar baik', 'fine', 'good'],
+    englishTranslation: "Hello! It is so wonderful to chat with you today.",
+    phonetic: "He-low! It iz sow wan-der-ful tu cet with yu tu-dey.",
+    vocab: [
+      { word: "Wonderful", meaning: "Luar biasa menyenangkan" },
+      { word: "Chat with you", meaning: "Ngobrol bersamamu" }
+    ],
+    aiReplyEn: "Hey there! It makes me so happy to see you. I love our daily chat sessions because practicing a language together is like going on a mini adventure. The weather here is nice and breezy today. Tell me, how has your day been treating you so far?",
+    aiReplyId: "Halo teman baikku! Senang banget bisa ketemu kamu lagi hari ini. Saya suka banget sesi ngobrol kita karena belajar bahasa bareng itu kayak petualangan kecil yang seru. Cuaca di sini lagi adem dan santai banget. Ceritakan dong, gimana harimu berjalan sejauh ini?",
+    suggestedReplies: [
+      "My day is going pretty well! (Hariku berjalan cukup menyenangkan!)",
+      "It has been a busy work day! (Hari ini cukup padat dengan pekerjaan!)",
+      "Just relaxing and taking it easy. (Lagi santai-santai aja nih.)"
+    ]
   },
   {
     keywords: ['nama', 'kenalan', 'siapa nama', 'nama saya', 'panggil'],
-    englishTranslation: "My name is... Nice to meet you!",
-    phonetic: "May neym iz... Nays tu mit yu!",
+    englishTranslation: "My name is... It is great to get to know you!",
+    phonetic: "May neym iz... It iz greyt tu get tu now yu!",
     vocab: [
-      { word: "Name", meaning: "Nama" },
-      { word: "Nice to meet you", meaning: "Senang berkenalan denganmu" }
+      { word: "Get to know you", meaning: "Mengenalmu lebih dekat" }
     ],
-    aiReplyEn: "It's wonderful to meet you! Where are you from?",
-    aiReplyId: "Senang sekali bisa berkenalan denganmu! Dari mana asalmu?",
-    suggestedReply: "I am from Indonesia. (Saya berasal dari Indonesia.)"
-  },
-  {
-    keywords: ['kopi', 'pesan', 'teh', 'kafe', 'minum', 'gula', 'dingin', 'panas', 'latte', 'espresso'],
-    englishTranslation: "I would like to order a cup of coffee, please.",
-    phonetic: "Ay wud layk tu or-der e kap ov ko-fi, pliiz.",
-    vocab: [
-      { word: "I would like", meaning: "Saya ingin (sopan)" },
-      { word: "Order", meaning: "Memesan" },
-      { word: "Cup of coffee", meaning: "Secangkir kopi" },
-      { word: "Please", meaning: "Tolong / Silakan (kata sopan)" }
-    ],
-    aiReplyEn: "Sure thing! Would you like that hot or iced? And do you want any sugar or milk?",
-    aiReplyId: "Tentu! Mau yang panas atau dingin? Mau ditambah gula atau susu?",
-    suggestedReply: "Iced, with less sugar, please. (Dingin, dengan sedikit gula ya.)"
-  },
-  {
-    keywords: ['makan', 'lapar', 'restoran', 'menu', 'makanan', 'enak', 'kenyang'],
-    englishTranslation: "Could I see the food menu, please? I'm getting hungry.",
-    phonetic: "Kud ay sii de fud me-nyu, pliiz? Aym get-ting hang-gri.",
-    vocab: [
-      { word: "Could I see", meaning: "Bolehkah saya melihat" },
-      { word: "Menu", meaning: "Daftar menu" },
-      { word: "Hungry", meaning: "Lapar" }
-    ],
-    aiReplyEn: "Here is the menu! Our best-seller today is the grilled chicken with garlic butter. Would you like to try it?",
-    aiReplyId: "Ini menunya! Menu terlaris hari ini ayam panggang saus mentega bawang. Mau mencobanya?",
-    suggestedReply: "Yes, that sounds delicious! (Ya, kedengarannya lezat!)"
-  },
-  {
-    keywords: ['bayar', 'bon', 'struk', 'tagihan', 'berapa', 'harganya', 'bill', 'check'],
-    englishTranslation: "Could we have the bill, please? How much is it?",
-    phonetic: "Kud wi hev de bil, pliiz? Hau mac iz it?",
-    vocab: [
-      { word: "Bill / Check", meaning: "Tagihan / Bon" },
-      { word: "How much", meaning: "Berapa harganya" }
-    ],
-    aiReplyEn: "Here is your bill. It comes to twenty dollars in total. Would you prefer paying with cash or card?",
-    aiReplyId: "Ini tagihannya. Totalnya 20 dollar. Lebih suka bayar tunai atau kartu?",
-    suggestedReply: "I will pay with card, please. (Saya bayar pakai kartu ya.)"
-  },
-  {
-    keywords: ['toilet', 'kamar mandi', 'arah', 'dimana', 'jalan', 'stasiun', 'bandara', 'hotel'],
-    englishTranslation: "Excuse me, could you tell me where the nearest restroom is?",
-    phonetic: "Eks-kyus mi, kud yu tel mi hwer de nir-est rest-rum iz?",
-    vocab: [
-      { word: "Excuse me", meaning: "Permisi" },
-      { word: "Nearest", meaning: "Terdekat" },
-      { word: "Restroom / Bathroom", meaning: "Kamar mandi / Toilet" }
-    ],
-    aiReplyEn: "Of course! Walk straight down this hall and take a right. It's right next to the elevator.",
-    aiReplyId: "Tentu saja! Jalan lurus menyusuri lorong ini lalu belok kanan. Tepat di sebelah lift.",
-    suggestedReply: "Thank you very much for your help! (Terima kasih banyak atas bantuannya!)"
-  },
-  {
-    keywords: ['pelan', 'kurang paham', 'tidak paham', 'ulangi', 'maksud', 'arti', 'slowly', 'repeat', 'understand'],
-    englishTranslation: "Could you please speak a little slower? I am still practicing my English.",
-    phonetic: "Kud yu pliiz spik e lit-tel slow-er? Ay em stil prek-tis-ing may ing-glisy.",
-    vocab: [
-      { word: "Speak slower", meaning: "Bicara lebih pelan" },
-      { word: "Still practicing", meaning: "Masih berlatih" }
-    ],
-    aiReplyEn: "No problem at all! I will speak more slowly and clearly. Take your time, you are doing great!",
-    aiReplyId: "Sama sekali tidak masalah! Saya akan bicara lebih pelan dan jelas. Santai saja, kamu sudah berusaha dengan sangat baik!",
-    suggestedReply: "Thank you for being so patient. (Terima kasih sudah begitu sabar.)"
-  },
-  {
-    keywords: ['capek', 'lelah', 'istirahat', 'ngantuk', 'tidur', 'tired', 'sleep'],
-    englishTranslation: "I feel quite tired today. I think I need some rest.",
-    phonetic: "Ay fiil kwayt tay-erd tu-dey. Ay tingk ay niid sam rest.",
-    vocab: [
-      { word: "Quite tired", meaning: "Cukup lelah" },
-      { word: "Need rest", meaning: "Butuh istirahat" }
-    ],
-    aiReplyEn: "I hear you! Working hard can be exhausting. Make sure to get some good sleep tonight!",
-    aiReplyId: "Saya paham! Kerja keras memang melelahkan. Pastikan tidur nyenyak malam ini ya!",
-    suggestedReply: "Yes, I will go to bed early. (Ya, saya akan tidur lebih awal.)"
-  },
-  {
-    keywords: ['belajar', 'inggris', 'susah', 'lancar', 'bisa', 'latihan', 'praktek'],
-    englishTranslation: "I want to improve my English speaking and listening skills.",
-    phonetic: "Ay wont tu im-pruv may ing-glisy spiik-ing end lis-ning skilz.",
-    vocab: [
-      { word: "Improve", meaning: "Meningkatkan" },
-      { word: "Speaking", meaning: "Berbicara" },
-      { word: "Listening", meaning: "Mendengar" }
-    ],
-    aiReplyEn: "You are in the right place! The key is to practice speaking aloud every day without fearing mistakes. I'm right here with you!",
-    aiReplyId: "Kamu berada di tempat yang tepat! Kuncinya adalah sering bersuara setiap hari tanpa takut salah. Saya siap menemani latihanmu!",
-    suggestedReply: "Let's practice together! (Ayo kita latihan bersama!)"
+    aiReplyEn: "Nice to officially meet you! I'm Echo, your friendly English partner. I'm curious about the place you call home. What city do you live in, and what is your favorite thing about your hometown?",
+    aiReplyId: "Senang berkenalan secara resmi denganmu! Nama saya Echo, teman belajar bahasa Inggrismu yang ramah. Saya penasaran nih sama tempat tinggalmu. Kamu tinggal di kota mana, dan hal apa yang paling kamu sukai dari kotamu?",
+    suggestedReplies: [
+      "I live in Bandung, the weather is cool! (Saya tinggal di Bandung, udaranya sejuk!)",
+      "I live in Jakarta, a bustling big city! (Saya tinggal di Jakarta, kota besar yang ramai!)",
+      "I live in a peaceful small town. (Saya tinggal di kota kecil yang tenang.)"
+    ]
   }
 ];
 
@@ -140,29 +137,20 @@ export class ConversationEngine {
     return this.apiKey;
   }
 
-  /**
-   * Detect if input is Indonesian or English
-   */
   isIndonesian(text) {
-    const indonesianCommonWords = ['saya', 'aku', 'kamu', 'anda', 'mau', 'ingin', 'bisa', 'dan', 'ini', 'itu', 'yang', 'dengan', 'di', 'ke', 'dari', 'apa', 'kenapa', 'bagaimana', 'kapan', 'sudah', 'belum', 'tidak', 'nggak', 'gak', 'bukan', 'tolong', 'terima', 'kasih', 'lagi', 'suka', 'kopi', 'pesan', 'makan'];
+    const indonesianCommonWords = ['saya', 'aku', 'kamu', 'anda', 'mau', 'ingin', 'bisa', 'dan', 'ini', 'itu', 'yang', 'dengan', 'di', 'ke', 'dari', 'apa', 'kenapa', 'bagaimana', 'kapan', 'sudah', 'belum', 'tidak', 'nggak', 'gak', 'bukan', 'tolong', 'terima', 'kasih', 'lagi', 'suka', 'kopi', 'pesan', 'makan', 'iya', 'ya', 'capek', 'enak'];
     const words = text.toLowerCase().split(/\s+/);
     let idCount = 0;
     words.forEach(w => {
       if (indonesianCommonWords.includes(w)) idCount++;
     });
-    // If has Indonesian words or general Indonesian character patterns
-    return idCount > 0 || !/[a-z]/.test(text) ? true : false;
+    return idCount > 0 || !/[a-z]/.test(text);
   }
 
-  /**
-   * Process message from user
-   * Returns structured dialogue card
-   */
   async processMessage(userText, contextScenario = 'daily') {
     const text = userText.trim();
     if (!text) return null;
 
-    // Check if Gemini API key is configured
     if (this.apiKey) {
       try {
         const geminiResult = await this.callGeminiAPI(text, contextScenario);
@@ -172,15 +160,11 @@ export class ConversationEngine {
       }
     }
 
-    // Fallback: Local Intelligent Engine
     return this.processLocally(text, contextScenario);
   }
 
-  /**
-   * Local Smart Engine
-   */
   processLocally(text, scenario) {
-    const lower = text.toLowerCase();
+    const lower = text.toLowerCase().trim();
     
     // Check keyword matches in Knowledge Base
     let bestMatch = null;
@@ -189,8 +173,9 @@ export class ConversationEngine {
     for (const item of KNOWLEDGE_BASE) {
       let count = 0;
       for (const kw of item.keywords) {
-        if (lower.includes(kw)) {
-          count++;
+        // match whole word or contains
+        if (lower === kw || lower.includes(kw)) {
+          count += (lower === kw ? 3 : 1);
         }
       }
       if (count > maxMatchedKeywords) {
@@ -207,19 +192,14 @@ export class ConversationEngine {
         vocabulary: bestMatch.vocab,
         aiReplyEn: bestMatch.aiReplyEn,
         aiReplyId: bestMatch.aiReplyId,
-        suggestedReply: bestMatch.suggestedReply,
+        suggestedReplies: bestMatch.suggestedReplies || [bestMatch.suggestedReply],
         source: 'local'
       };
     }
 
-    // Dynamic fallback for any general input
+    // Dynamic fallback for any general input: Still be talkative and proactive!
     const isIndo = this.isIndonesian(text);
-    
-    // Simple translation approximation for common words if not in knowledge base
-    let translated = isIndo 
-      ? this.smartLocalTranslate(text)
-      : text;
-
+    let translated = isIndo ? this.smartLocalTranslate(text) : text;
     const phonetic = getPhoneticGuide(translated);
 
     return {
@@ -227,63 +207,53 @@ export class ConversationEngine {
       englishTranslation: translated,
       phonetic: phonetic,
       vocabulary: [
-        { word: translated.split(' ')[0] || "Hello", meaning: "Kata kunci percakapan" },
-        { word: "Practice", meaning: "Latihan" }
+        { word: translated.split(' ')[0] || "Hello", meaning: "Kata kunci" },
+        { word: "Together", meaning: "Bersama-sama" }
       ],
-      aiReplyEn: "That's a great thought! I understand you clearly. Would you like to practice saying that out loud with me?",
-      aiReplyId: "Ide yang bagus! Saya memahamimu dengan jelas. Mau mencoba mengucapkannya bersuara bersama saya?",
-      suggestedReply: "Yes, let's practice together! (Ya, ayo kita latihan bareng!)",
+      aiReplyEn: "That's a very interesting thought! You know, the best part about chatting is discovering new perspectives. Every time I practice talking like this, I feel more confident. How about you? Do you feel more comfortable practicing with short casual chats like this?",
+      aiReplyId: "Itu pemikiran yang sangat menarik! Tahu nggak, bagian paling asyik dari ngobrol santai adalah menemukan sudut pandang baru. Setiap kali saya latihan ngobrol kayak gini, saya ngerasa makin percaya diri. Kalau kamu gimana? Merasa lebih nyaman latihan lewat obrolan santai kayak gini kan?",
+      suggestedReplies: [
+        "Yes, I feel much more relaxed! (Ya, saya merasa jauh lebih santai!)",
+        "It's really fun practicing this way! (Seru banget latihan dengan cara ini!)",
+        "I'm learning new words every minute! (Saya dapat kata-kata baru tiap menit!)"
+      ],
       source: 'local'
     };
   }
 
   smartLocalTranslate(indoText) {
-    // Intelligent phrase transformer
-    const lower = indoText.toLowerCase();
-    if (lower.includes('mau') && lower.includes('pesan')) {
-      return "I would like to place an order, please.";
-    }
-    if (lower.includes('berapa') && lower.includes('harga')) {
-      return "Excuse me, how much does this cost?";
-    }
-    if (lower.includes('dimana') || lower.includes('di mana')) {
-      return "Excuse me, could you tell me where this is?";
-    }
-    if (lower.includes('terima kasih') || lower.includes('makasih')) {
-      return "Thank you very much for your kindness!";
-    }
-    if (lower.includes('selamat pagi')) {
-      return "Good morning! Have a wonderful day.";
-    }
-    if (lower.includes('selamat malam')) {
-      return "Good evening! It is nice to see you.";
-    }
-    if (lower.includes('tolong') || lower.includes('bantu')) {
-      return "Could you please help me with this?";
-    }
-    if (lower.includes('senang')) {
-      return "I am really happy to hear that!";
-    }
+    const lower = indoText.toLowerCase().trim();
+    if (lower === 'ya' || lower === 'iya' || lower === 'yes') return "Yes, that's right!";
+    if (lower === 'tidak' || lower === 'nggak' || lower === 'gak' || lower === 'no') return "No, not really.";
+    if (lower === 'oke' || lower === 'ok') return "Alright, sounds good to me!";
+    if (lower === 'belum') return "Not yet, but maybe soon!";
+    if (lower === 'sudah') return "Yes, I have already done that!";
+    if (lower.includes('mau') && lower.includes('pesan')) return "I would like to place an order, please.";
+    if (lower.includes('berapa') && lower.includes('harga')) return "Excuse me, how much does this cost?";
+    if (lower.includes('dimana') || lower.includes('di mana')) return "Excuse me, could you tell me where this is?";
+    if (lower.includes('terima kasih') || lower.includes('makasih')) return "Thank you so much for your help and kindness!";
+    if (lower.includes('selamat pagi')) return "Good morning! Wishing you a wonderful and bright day.";
+    if (lower.includes('selamat malam')) return "Good evening! It is so nice to see you tonight.";
     return `I want to say: "${indoText}".`;
   }
 
-  /**
-   * Gemini API call with structured prompt
-   */
   async callGeminiAPI(userText, scenario) {
     const prompt = `
-Anda adalah seorang tutor bahasa Inggris pribadi yang sangat ramah, suportif, dan berpengalaman membimbing pemula dari Indonesia yang belum lancar berbahasa Inggris.
-Konteks situasi saat ini: "${scenario}".
-Pengguna berkata: "${userText}"
+PERAN ANDA:
+Anda adalah 'Echo', teman ngobrol native speaker bahasa Inggris yang SANGAT RAMAH, EKSPRESIF, dan PROAKTIF MEMBUKA CERITA.
+Lawan bicara Anda adalah orang Indonesia pemula yang sedang belajar bahasa Inggris dan SERINGKALI HANYA MENJAWAB PENDEK atau satu kata saja (misalnya: "ya", "dingin", "kopi", "tidak", "capek", "enak", "belum", "oke").
 
-Tugas Anda:
-1. Jika pengguna menulis dalam Bahasa Indonesia, ubah apa yang ingin dia sampaikan ke dalam Bahasa Inggris percakapan sehari-hari yang natural dan sering dipakai oleh Native Speaker (bukan bahasa kaku buku cetak).
-2. Berikan "phonetic" (cara baca ramah orang Indonesia, misalnya: "Good morning" -> "Gud mor-ning").
-3. Berikan 2-3 kosakata kunci beserta artinya dalam bahasa Indonesia.
-4. Jawab obrolan pengguna tersebut layaknya teman ngobrol / penutur asli dalam Bahasa Inggris (aiReplyEn) yang santai dan memancing obrolan berlanjut, sertakan pula terjemahan Bahasa Indonesia dari jawaban Anda (aiReplyId).
-5. Berikan satu contoh balasan mudah yang bisa dikatakan pengguna selanjutnya (suggestedReply).
+ATURAN UTAMA:
+1. JANGAN PERNAH membalas pendek! Jika pengguna hanya menjawab 1-2 kata, tugas Anda adalah MENGEMBANGKAN ceritanya agar obrolan terus hidup dan seru.
+2. Pertama, ubah jawaban pengguna (baik pendek maupun panjang) menjadi kalimat bahasa Inggris yang santai, alami, dan lengkap (englishTranslation).
+3. Berikan 'phonetic' (cara baca ramah lidah Indonesia).
+4. Buat balasan Anda (aiReplyEn & aiReplyId) yang terdiri dari 3 bagian:
+   - Sambutan ramah atas apa yang dikatakan pengguna.
+   - CERITA / ANEKDOT PENDEK (2 kalimat santai berisi cerita pengalaman seru, opini menarik, atau kebiasaan seru tentang topik itu).
+   - SATU PERTANYAAN RAMAH & MENARIK di akhir untuk mengajak pengguna bercerita lebih lanjut tanpa merasa diuji.
+5. Berikan 3 pilihan 'suggestedReplies' (array berisi opsi jawaban singkat dalam bahasa Inggris + artinya dalam kurung) agar pengguna tinggal memilih atau membaca jika bingung mau menjawab apa.
 
-Balas HANYA dalam format JSON valid tanpa tanda backtick markdown atau penjelasan lainnya:
+Balas HANYA dalam format JSON valid tanpa tanda backtick markdown atau teks lainnya:
 {
   "englishTranslation": "...",
   "phonetic": "...",
@@ -292,11 +262,14 @@ Balas HANYA dalam format JSON valid tanpa tanda backtick markdown atau penjelasa
   ],
   "aiReplyEn": "...",
   "aiReplyId": "...",
-  "suggestedReply": "..."
+  "suggestedReplies": [
+    "Option 1 in English (Arti bahasa Indonesia)",
+    "Option 2 in English (Arti bahasa Indonesia)",
+    "Option 3 in English (Arti bahasa Indonesia)"
+  ]
 }
 `;
 
-    // Try Gemini 2.0 Flash or 1.5 Flash
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${this.apiKey}`;
     
     const response = await fetch(url, {
@@ -311,7 +284,7 @@ Balas HANYA dalam format JSON valid tanpa tanda backtick markdown atau penjelasa
           }
         ],
         generationConfig: {
-          temperature: 0.7,
+          temperature: 0.75,
           responseMimeType: "application/json"
         }
       })
@@ -333,7 +306,7 @@ Balas HANYA dalam format JSON valid tanpa tanda backtick markdown atau penjelasa
       vocabulary: parsed.vocabulary || [],
       aiReplyEn: parsed.aiReplyEn,
       aiReplyId: parsed.aiReplyId,
-      suggestedReply: parsed.suggestedReply || '',
+      suggestedReplies: parsed.suggestedReplies || [parsed.suggestedReply || ''],
       source: 'gemini'
     };
   }

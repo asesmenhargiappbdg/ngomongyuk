@@ -12,7 +12,9 @@ import {
   CheckCircle2,
   Bot,
   User,
-  Lightbulb
+  Lightbulb,
+  MessageCircle,
+  Flame
 } from 'lucide-react';
 import AudioPlayerButton from './AudioPlayerButton';
 import PronunciationPractice from './PronunciationPractice';
@@ -28,12 +30,11 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
   const [activeSpeedRate, setActiveSpeedRate] = useState(currentSpeed);
   const messagesEndRef = useRef(null);
 
-  // Sync speed changes from settings
   useEffect(() => {
     setActiveSpeedRate(currentSpeed);
   }, [currentSpeed]);
 
-  // Load initial welcome message when scenario changes
+  // Initial welcome message tailored for storytelling
   useEffect(() => {
     if (activeScenario) {
       setMessages([
@@ -44,7 +45,7 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
           indonesian: activeScenario.initialMessageId,
           phonetic: activeScenario.initialMessagePhonetic || '',
           vocabulary: [],
-          suggestedReply: activeScenario.starterPrompts?.[0]?.enText || ''
+          suggestedReplies: activeScenario.starterPrompts?.map(p => `${p.enText} (${p.idText})`) || []
         }
       ]);
     } else {
@@ -52,20 +53,23 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
         {
           id: 'welcome-free',
           sender: 'ai',
-          english: "Hello! Welcome to SpeakBridge. You can speak or type to me in Indonesian, and I will help you say it in natural English!",
-          indonesian: "Halo! Selamat datang di SpeakBridge. Kamu bisa bicara atau ketik dalam Bahasa Indonesia, dan saya akan membantumu mengatakannya dalam Bahasa Inggris alami!",
-          phonetic: "He-low! Wel-kam tu Spik-Brij...",
+          english: "Hey there! I'm Echo, your friendly conversation buddy. Don't worry about grammar or speaking long sentences—even if you answer with just one word like 'yes', 'coffee', or 'tired', I will always keep our story exciting and help you speak naturally! How is your day going so far?",
+          indonesian: "Halo sahabatku! Nama saya Echo, teman ngobrolmu yang super ramah. Jangan takut salah grammar atau kalimat panjang—meskipun kamu cuma jawab satu kata kayak 'ya', 'kopi', atau 'capek', saya bakal selalu membuka cerita seru dan membantumu ngomong dengan lancar! Gimana harimu sejauh ini?",
+          phonetic: "Hey der! Aym E-ko, yor frend-li kon-ver-sey-syen ba-di...",
           vocabulary: [
-            { word: "Welcome", meaning: "Selamat datang" },
-            { word: "Speak", meaning: "Bicara" }
+            { word: "Friendly", meaning: "Ramah" },
+            { word: "Exciting", meaning: "Seru / Mengasyikkan" }
           ],
-          suggestedReply: "I want to practice speaking English. (Saya mau latihan ngomong bahasa Inggris.)"
+          suggestedReplies: [
+            "My day is going great! (Hariku berjalan menyenangkan!)",
+            "I feel a bit tired from work. (Saya agak capek habis kerja.)",
+            "Just relaxing and having some coffee. (Lagi santai sambil minum kopi.)"
+          ]
         }
       ]);
     }
   }, [activeScenario]);
 
-  // Auto scroll to bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -74,23 +78,29 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
     scrollToBottom();
   }, [messages, isLoading]);
 
-  // Handle Send
   const handleSendMessage = async (textToSend = inputText) => {
-    const text = textToSend.trim();
-    if (!text || isLoading) return;
+    // If text contains translation in parenthesis e.g. "I love coffee! (Saya suka kopi)", extract the English part or full
+    let cleanText = textToSend.trim();
+    if (!cleanText || isLoading) return;
+
+    // If it's a suggestion clicked, take the part before parenthesis for sending
+    let processedText = cleanText;
+    const match = cleanText.match(/^(.*?)\s*\((.*?)\)$/);
+    if (match) {
+      processedText = match[1].trim(); // send English part directly
+    }
 
     setInputText('');
     setIsLoading(true);
 
     try {
-      const scenarioContext = activeScenario ? activeScenario.title : 'general conversation';
-      const result = await conversationEngine.processMessage(text, scenarioContext);
+      const scenarioContext = activeScenario ? activeScenario.title : 'santai dan bercerita seru';
+      const result = await conversationEngine.processMessage(processedText, scenarioContext);
 
-      // Create message pair
       const userMsg = {
         id: 'user-' + Date.now(),
         sender: 'user',
-        userOriginalText: result.userOriginalText,
+        userOriginalText: processedText,
         english: result.englishTranslation,
         phonetic: result.phonetic,
         indonesian: result.userOriginalText,
@@ -104,15 +114,15 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
         english: result.aiReplyEn,
         indonesian: result.aiReplyId,
         vocabulary: [],
-        suggestedReply: result.suggestedReply
+        suggestedReplies: result.suggestedReplies || [result.suggestedReply || '']
       };
 
       setMessages((prev) => [...prev, userMsg, aiMsg]);
 
-      // Automatically play AI voice response for natural ear training
+      // Speak AI response automatically with user's preferred speed
       setTimeout(() => {
         speechService.speakEnglish(aiMsg.english, { rate: activeSpeedRate });
-      }, 400);
+      }, 350);
 
     } catch (err) {
       console.error('Failed to process message:', err);
@@ -121,7 +131,6 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
     }
   };
 
-  // Handle Voice Input
   const handleToggleVoice = () => {
     if (isListening) {
       speechService.stopListening();
@@ -131,13 +140,13 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
 
     setIsListening(true);
     speechService.startListening(
-      'id-ID', // default to Indonesian voice input, but browser also catches common English phrases
+      'id-ID',
       (result) => {
         setInputText(result.interim || result.final);
       },
       (error) => {
         setIsListening(false);
-        alert('Izin microphone dibutuhkan di browser untuk fitur bicara.');
+        alert('Izin microphone di browser dibutuhkan untuk fitur bicara.');
       },
       (finalText) => {
         setIsListening(false);
@@ -148,7 +157,7 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
     );
   };
 
-  const handleResetConversation = () => {
+  const handleReset = () => {
     speechService.stopSpeaking();
     if (activeScenario) {
       setMessages([
@@ -158,7 +167,7 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
           english: activeScenario.initialMessageEn,
           indonesian: activeScenario.initialMessageId,
           vocabulary: [],
-          suggestedReply: activeScenario.starterPrompts?.[0]?.enText || ''
+          suggestedReplies: activeScenario.starterPrompts?.map(p => `${p.enText} (${p.idText})`) || []
         }
       ]);
     } else {
@@ -167,54 +176,39 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)] max-w-4xl mx-auto px-2 sm:px-4">
-      {/* Scenario Header Bar */}
-      <div className="py-2.5 px-4 bg-white/90 backdrop-blur rounded-2xl border border-slate-200/80 shadow-2xs mb-3 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2.5">
-          <span className="text-xl">
+    <div className="flex flex-col h-full w-full bg-slate-50 relative select-none">
+      {/* Mini Scenario Banner */}
+      <div className="px-3.5 py-2 bg-white/95 border-b border-slate-200/70 flex items-center justify-between shrink-0 shadow-2xs">
+        <div className="flex items-center gap-2 overflow-hidden">
+          <span className="text-lg shrink-0">
             {activeScenario ? activeScenario.emoji : '💬'}
           </span>
-          <div>
-            <h3 className="font-bold text-slate-800 text-xs sm:text-sm">
-              {activeScenario ? activeScenario.title : 'Obrolan Bebas (Free Chat)'}
-            </h3>
-            <p className="text-[11px] text-slate-400">
-              {activeScenario ? activeScenario.englishTitle : 'Ketik atau bicara santai dalam Bahasa Indonesia'}
+          <div className="truncate">
+            <h4 className="font-bold text-xs text-slate-800 truncate">
+              {activeScenario ? activeScenario.title : 'Ngobrol Santai Bebas'}
+            </h4>
+            <p className="text-[10px] text-slate-400 truncate">
+              {activeScenario ? activeScenario.englishTitle : 'AI aktif bercerita & memancing obrolan'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Quick Speed Switcher */}
-          <div className="hidden sm:flex items-center bg-slate-100 rounded-lg p-0.5 text-xs font-semibold text-slate-600">
-            <span className="px-2 text-[10px] text-slate-400">Kecepatan:</span>
-            {[0.7, 0.85, 1.0].map((rate) => (
-              <button
-                key={rate}
-                onClick={() => setActiveSpeedRate(rate)}
-                className={`px-2 py-0.5 rounded-md transition-all ${
-                  activeSpeedRate === rate 
-                    ? "bg-white text-indigo-700 shadow-2xs font-bold" 
-                    : "text-slate-500 hover:text-slate-800"
-                }`}
-              >
-                {rate}x
-              </button>
-            ))}
-          </div>
-
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
+            {activeSpeedRate}x
+          </span>
           <button
-            onClick={handleResetConversation}
+            onClick={handleReset}
             className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-            title="Ulangi percakapan dari awal"
+            title="Mulai obrolan dari awal"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto space-y-4 pr-1 sm:pr-2 pb-4">
+      {/* Messages Scroll View (Optimized for Mobile Phone Screen) */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-3.5">
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -222,44 +216,44 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
               msg.sender === 'user' ? 'items-end' : 'items-start'
             }`}
           >
-            {/* User Message Bubble */}
+            {/* USER BUBBLE */}
             {msg.sender === 'user' ? (
-              <div className="max-w-[92%] sm:max-w-[80%] bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-3xl rounded-tr-xs p-4 sm:p-5 shadow-md shadow-indigo-100">
-                {/* Indonesian User Input */}
-                <div className="pb-2.5 mb-2.5 border-b border-indigo-400/40">
-                  <span className="text-[10px] font-bold tracking-wider uppercase text-indigo-200 block mb-0.5">
-                    Yang Anda Ucapkan (Bahasa Indonesia):
+              <div className="max-w-[88%] bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-2xl rounded-tr-xs p-3.5 shadow-sm">
+                {/* Original text */}
+                <div className="pb-1.5 mb-1.5 border-b border-indigo-400/30">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-indigo-200 block">
+                    Ucapanmu:
                   </span>
-                  <p className="text-sm font-medium text-indigo-50">
+                  <p className="text-xs font-medium text-indigo-50">
                     "{msg.userOriginalText}"
                   </p>
                 </div>
 
-                {/* English Bridge Translation */}
+                {/* English Bridge */}
                 <div>
-                  <span className="text-[10px] font-bold tracking-wider uppercase text-amber-300 block mb-0.5">
-                    ✨ Cara Bicara Alaminya (Bahasa Inggris):
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-amber-300 block mb-0.5">
+                    ✨ Cara Bicaranya:
                   </span>
-                  <p className="text-base sm:text-lg font-extrabold text-white leading-relaxed mb-2">
+                  <p className="text-sm font-bold text-white leading-snug mb-1.5">
                     "{msg.english}"
                   </p>
 
-                  {/* Phonetic Guide */}
+                  {/* Phonetic Cara Baca */}
                   {msg.phonetic && (
-                    <div className="bg-indigo-800/80 rounded-xl px-3 py-1 text-xs text-indigo-100 font-mono inline-block mb-3 border border-indigo-500/50">
-                      <span className="text-amber-300 mr-1.5 font-sans font-semibold">🗣️ Cara baca:</span>
+                    <div className="bg-indigo-800/80 rounded-lg px-2 py-0.5 text-[11px] text-indigo-100 font-mono inline-block mb-2 border border-indigo-500/40">
+                      <span className="text-amber-300 mr-1 font-sans font-semibold">🗣️</span>
                       {msg.phonetic}
                     </div>
                   )}
 
-                  {/* Action Buttons */}
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                  {/* Audio & Practice Buttons */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                     <AudioPlayerButton
                       text={msg.english}
                       rate={activeSpeedRate}
-                      label="Dengarkan Suara"
+                      label="Dengar"
                       size="sm"
-                      className="bg-white/15 text-white hover:bg-white/25 border-white/20"
+                      className="bg-white/15 text-white hover:bg-white/25 border-white/20 text-[11px] py-1 px-2.5"
                     />
 
                     <button
@@ -268,55 +262,46 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
                         phonetic: msg.phonetic,
                         meaning: msg.userOriginalText
                       })}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-400 hover:bg-amber-300 text-amber-950 font-bold rounded-full text-xs shadow-sm transition-all active:scale-95"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-400 hover:bg-amber-300 text-amber-950 font-bold rounded-full text-[11px] shadow-2xs active:scale-95"
                     >
-                      <Mic className="w-3.5 h-3.5" /> Latih Ucapkan Ini!
+                      <Mic className="w-3 h-3" /> Tirukan!
                     </button>
                   </div>
-
-                  {/* Vocabulary breakdown */}
-                  {msg.vocabulary && msg.vocabulary.length > 0 && (
-                    <div className="mt-3 pt-2.5 border-t border-indigo-500/40 flex flex-wrap gap-1.5">
-                      {msg.vocabulary.map((v, i) => (
-                        <span
-                          key={i}
-                          className="text-[11px] bg-indigo-800/60 px-2 py-0.5 rounded-md text-indigo-100 border border-indigo-500/40"
-                        >
-                          <strong className="text-amber-300">{v.word}:</strong> {v.meaning}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
             ) : (
-              /* AI Response Bubble */
-              <div className="max-w-[92%] sm:max-w-[80%] bg-white rounded-3xl rounded-tl-xs p-4 sm:p-5 shadow-sm border border-slate-200/80">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold">
-                    <Bot className="w-3.5 h-3.5" />
+              /* AI BUBBLE */
+              <div className="max-w-[90%] bg-white rounded-2xl rounded-tl-xs p-3.5 shadow-2xs border border-slate-200/80">
+                {/* Header AI Avatar */}
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex items-center justify-center text-[10px] font-bold shadow-2xs">
+                    E
                   </div>
-                  <span className="text-xs font-bold text-slate-700">Teman Ngobrol AI</span>
-                  <span className="text-[10px] text-slate-400">Native Partner</span>
+                  <span className="text-[11px] font-bold text-slate-800">Echo</span>
+                  <span className="text-[9px] text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded-full font-semibold">
+                    Native Buddy
+                  </span>
                 </div>
 
-                {/* AI English Text */}
-                <p className="text-base sm:text-lg font-bold text-slate-800 leading-relaxed mb-1.5">
+                {/* AI Spoken English (Story & Question) */}
+                <p className="text-xs sm:text-sm font-semibold text-slate-900 leading-relaxed mb-1.5">
                   "{msg.english}"
                 </p>
 
-                {/* AI Indonesian Translation */}
-                <p className="text-xs sm:text-sm text-slate-500 italic mb-3">
-                  Artinya: <span className="text-slate-700 font-medium not-italic">{msg.indonesian}</span>
+                {/* Indonesian Translation */}
+                <p className="text-[11px] sm:text-xs text-slate-500 italic mb-2.5 leading-relaxed bg-slate-50 p-2 rounded-xl border border-slate-100">
+                  <strong className="text-slate-600 not-italic block mb-0.5">Artinya:</strong>
+                  {msg.indonesian}
                 </p>
 
                 {/* Audio Button */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 mb-2">
                   <AudioPlayerButton
                     text={msg.english}
                     rate={activeSpeedRate}
-                    label="Dengar Balasan"
+                    label="Putar Suara"
                     size="sm"
+                    className="text-[11px] py-1 px-2.5"
                   />
                   <button
                     onClick={() => setPracticingSentence({
@@ -324,25 +309,30 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
                       phonetic: '',
                       meaning: msg.indonesian
                     })}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-full text-xs transition-colors"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-full text-[11px] transition-colors"
                   >
-                    <Mic className="w-3.5 h-3.5 text-indigo-600" /> Tirukan Suara Ini
+                    <Mic className="w-3 h-3 text-indigo-600" /> Tirukan
                   </button>
                 </div>
 
-                {/* Suggested Follow-up Reply */}
-                {msg.suggestedReply && (
-                  <div className="mt-3 pt-3 border-t border-slate-100">
-                    <span className="text-[11px] font-semibold text-slate-400 block mb-1">
-                      💡 Saran balasan yang bisa kamu katakan selanjutnya:
+                {/* PROACTIVE SUGGESTED REPLIES (Multiple options for easy continuation) */}
+                {msg.suggestedReplies && msg.suggestedReplies.length > 0 && (
+                  <div className="pt-2 border-t border-slate-100 mt-2 space-y-1.5">
+                    <span className="text-[10px] font-bold text-slate-400 block">
+                      💡 Pilih balasan cepat untuk menjawab:
                     </span>
-                    <button
-                      onClick={() => handleSendMessage(msg.suggestedReply)}
-                      className="text-left text-xs bg-indigo-50/70 hover:bg-indigo-100/80 text-indigo-900 px-3 py-1.5 rounded-xl border border-indigo-100 font-medium transition-colors flex items-center justify-between w-full group"
-                    >
-                      <span>"{msg.suggestedReply}"</span>
-                      <ArrowRight className="w-3.5 h-3.5 text-indigo-500 group-hover:translate-x-1 transition-transform shrink-0" />
-                    </button>
+                    <div className="flex flex-col gap-1">
+                      {msg.suggestedReplies.map((reply, rIdx) => (
+                        <button
+                          key={rIdx}
+                          onClick={() => handleSendMessage(reply)}
+                          className="text-left text-[11px] bg-indigo-50/70 hover:bg-indigo-100/80 text-indigo-900 px-2.5 py-1.5 rounded-xl border border-indigo-100 font-medium transition-all active:scale-98 flex items-center justify-between group"
+                        >
+                          <span className="leading-snug">{reply}</span>
+                          <ArrowRight className="w-3 h-3 text-indigo-500 group-hover:translate-x-0.5 transition-transform shrink-0 ml-1" />
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -350,27 +340,27 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
           </div>
         ))}
 
-        {/* Loading Indicator */}
+        {/* Loading Spinner */}
         {isLoading && (
-          <div className="flex items-center gap-2 p-3 bg-white rounded-2xl border border-slate-100 max-w-xs shadow-2xs">
+          <div className="flex items-center gap-2 p-2.5 bg-white rounded-2xl border border-slate-100 max-w-xs shadow-2xs text-xs text-slate-500 font-medium">
             <div className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce"></div>
             <div className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce delay-100"></div>
             <div className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce delay-200"></div>
-            <span className="text-xs text-slate-500 font-medium">Sedang menerjemahkan & merespons...</span>
+            <span>Echo sedang merespons...</span>
           </div>
         )}
 
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Starter Prompts Carousel (if user doesn't know what to say) */}
+      {/* Quick Prompts Carousel for current scenario */}
       {activeScenario?.starterPrompts && (
-        <div className="py-1.5 overflow-x-auto flex gap-2 no-scrollbar shrink-0 mb-2">
+        <div className="px-3 py-1 overflow-x-auto flex gap-1.5 no-scrollbar shrink-0 bg-slate-100/60 border-t border-slate-200/50">
           {activeScenario.starterPrompts.map((p, idx) => (
             <button
               key={idx}
               onClick={() => handleSendMessage(p.idText)}
-              className="px-3 py-1.5 bg-white hover:bg-indigo-50 border border-slate-200/80 hover:border-indigo-200 rounded-xl text-xs text-slate-700 whitespace-nowrap shadow-2xs transition-all shrink-0 font-medium active:scale-95 flex items-center gap-1.5"
+              className="px-2.5 py-1 bg-white hover:bg-indigo-50 border border-slate-200/80 rounded-lg text-[11px] text-slate-700 whitespace-nowrap shadow-2xs shrink-0 font-medium active:scale-95 flex items-center gap-1"
             >
               <span>💬 {p.idText}</span>
             </button>
@@ -378,30 +368,30 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
         </div>
       )}
 
-      {/* Input Bar */}
-      <div className="bg-white rounded-3xl p-2.5 sm:p-3 border border-slate-200/80 shadow-lg shrink-0 mb-2">
+      {/* Input Bar Fixed for Thumb Accessibility */}
+      <div className="p-2 sm:p-2.5 bg-white border-t border-slate-200/80 shrink-0">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleSendMessage();
           }}
-          className="flex items-center gap-2"
+          className="flex items-center gap-1.5"
         >
-          {/* Microphone button */}
+          {/* Microphone */}
           <button
             type="button"
             onClick={handleToggleVoice}
-            className={`p-3 rounded-2xl transition-all duration-200 shadow-sm shrink-0 ${
+            className={`p-2.5 rounded-xl transition-all duration-200 shrink-0 ${
               isListening
                 ? "bg-rose-500 text-white ring-4 ring-rose-200 animate-pulse scale-105"
                 : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
             }`}
-            title={isListening ? "Klik untuk menghentikan bicara" : "Bicara dengan Mikrofon (Bahasa Indonesia atau Inggris)"}
+            title="Bicara dengan Mikrofon"
           >
             {isListening ? (
-              <MicOff className="w-5 h-5 text-white" />
+              <MicOff className="w-4 h-4 text-white" />
             ) : (
-              <Mic className="w-5 h-5 text-indigo-600" />
+              <Mic className="w-4 h-4 text-indigo-600" />
             )}
           </button>
 
@@ -412,30 +402,30 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
             onChange={(e) => setInputText(e.target.value)}
             placeholder={
               isListening
-                ? "Mendengarkan suaramu... silakan bicara!"
-                : "Ketik apa yang ingin kamu katakan (Bhs Indonesia / Inggris)..."
+                ? "Mendengarkan... silakan bicara!"
+                : "Ketik / jawab apa saja (bhs Indo/Inggris)..."
             }
-            className="flex-1 bg-transparent px-2 text-sm text-slate-800 placeholder-slate-400 focus:outline-none font-medium"
+            className="flex-1 bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-indigo-400 font-medium"
           />
 
-          {/* Send Button */}
+          {/* Send */}
           <button
             type="submit"
             disabled={!inputText.trim() || isLoading}
-            className="p-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white rounded-2xl transition-all shadow-md shadow-indigo-100 shrink-0 active:scale-95"
-            title="Kirim pesan"
+            className="p-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white rounded-xl transition-all shadow-sm shrink-0 active:scale-95"
+            title="Kirim"
           >
-            <Send className="w-5 h-5" />
+            <Send className="w-4 h-4" />
           </button>
         </form>
 
         {isListening && (
-          <div className="mt-2 pt-2 border-t border-rose-100 flex items-center justify-between text-xs text-rose-600 font-semibold px-2 animate-pulse">
-            <span>🎙️ Mikrofon aktif: Katakan apa saja dalam Bahasa Indonesia...</span>
+          <div className="mt-1.5 flex items-center justify-between text-[11px] text-rose-600 font-semibold px-2 animate-pulse">
+            <span>🎙️ Katakan apa saja...</span>
             <button
               type="button"
               onClick={handleToggleVoice}
-              className="text-[11px] underline"
+              className="underline"
             >
               Berhenti
             </button>

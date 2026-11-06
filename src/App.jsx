@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Navbar from './components/Navbar';
+import BottomNav from './components/BottomNav';
 import ChatView from './components/ChatView';
 import ScenarioView from './components/ScenarioView';
 import ListeningGym from './components/ListeningGym';
@@ -21,37 +22,52 @@ export default function App() {
     setActiveTab('chat');
   };
 
+  const handleSpeedToggle = () => {
+    // Cycle between 0.7x, 0.85x, 1.0x
+    const nextSpeed = currentSpeed === 0.7 ? 0.85 : currentSpeed === 0.85 ? 1.0 : 0.7;
+    setCurrentSpeed(nextSpeed);
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
-      {/* Top Navigation */}
-      <Navbar
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        onOpenTips={() => setIsTipsOpen(true)}
-        onOpenSettings={() => setIsSettingsOpen(true)}
-        onOpenInstallHp={() => setIsInstallHpOpen(true)}
-      />
+    <div className="min-h-screen w-full bg-slate-900/95 sm:py-4 flex justify-center items-center font-sans antialiased text-slate-800">
+      {/* Smartphone Device Container */}
+      <div className="w-full max-w-md h-screen sm:h-[92vh] sm:max-h-[860px] bg-slate-50 sm:rounded-[36px] sm:shadow-2xl sm:border sm:border-slate-700/60 flex flex-col overflow-hidden relative">
+        
+        {/* Top Header */}
+        <Navbar
+          currentSpeed={currentSpeed}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          onSpeedToggle={handleSpeedToggle}
+        />
 
-      {/* Main Content Area */}
-      <main className="flex-1 py-3 sm:py-4">
-        {activeTab === 'chat' && (
-          <ChatView
-            activeScenario={activeScenario}
-            currentSpeed={currentSpeed}
-            onOpenTips={() => setIsTipsOpen(true)}
-          />
-        )}
+        {/* Dynamic Mobile Screen Content */}
+        <main className="flex-1 overflow-hidden flex flex-col relative">
+          {activeTab === 'chat' && (
+            <ChatView
+              activeScenario={activeScenario}
+              currentSpeed={currentSpeed}
+              onOpenTips={() => setIsTipsOpen(true)}
+            />
+          )}
 
-        {activeTab === 'scenarios' && (
-          <ScenarioView onSelectScenario={handleSelectScenario} />
-        )}
+          {activeTab === 'scenarios' && (
+            <ScenarioView onSelectScenario={handleSelectScenario} />
+          )}
 
-        {activeTab === 'listening' && (
-          <ListeningGym defaultSpeed={currentSpeed} />
-        )}
-      </main>
+          {activeTab === 'listening' && (
+            <ListeningGym defaultSpeed={currentSpeed} />
+          )}
+        </main>
 
-      {/* Modals */}
+        {/* Bottom Mobile Tab Bar */}
+        <BottomNav
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onOpenTips={() => setIsTipsOpen(true)}
+        />
+      </div>
+
+      {/* Global Modals */}
       <TipsModal
         isOpen={isTipsOpen}
         onClose={() => setIsTipsOpen(false)}
