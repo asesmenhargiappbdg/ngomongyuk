@@ -7,9 +7,9 @@
     <meta name="description" content="Teman Belajar & Latihan Bicara Bahasa Inggris untuk Pemula" />
     
     <!-- PWA Settings -->
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="icon" type="image/svg+xml" href="/icon-192.svg" />
-    <link rel="apple-touch-icon" href="/icon-192.svg" />
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="./icon-192.svg" />
+    <link rel="apple-touch-icon" href="./icon-192.svg" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="NgomongYuk!" />
@@ -23,10 +23,42 @@
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
     <script>
-      // Register service worker for PWA installability
+      // Auto-updating Service Worker for instant seamless updates
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
+          navigator.serviceWorker.register('./sw.js').then((registration) => {
+            // Check for updates immediately on load
+            registration.update();
+
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // Automatically reload to apply the latest update
+                    window.location.reload();
+                  }
+                });
+              }
+            });
+          }).catch(err => console.log('SW registration note:', err));
+
+          let refreshing = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+              refreshing = true;
+              window.location.reload();
+            }
+          });
+
+          // Check for updates whenever user returns to the app tab/screen
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+              navigator.serviceWorker.getRegistration().then(reg => {
+                if (reg) reg.update();
+              });
+            }
+          });
         });
       }
     </script>
