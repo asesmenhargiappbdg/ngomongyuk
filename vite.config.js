@@ -4,12 +4,13 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: './', // Relative base path so it works on GitHub Pages, Android Capacitor, and Localhost!
   plugins: [
     react(),
     tailwindcss(),
   ],
   server: {
-    host: true, // Listen on all network addresses (0.0.0.0) so HP on the same Wi-Fi can connect
+    host: true,
     port: 5173,
   }
 })

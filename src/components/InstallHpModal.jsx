@@ -2,56 +2,52 @@ import React, { useState } from 'react';
 import { 
   X, 
   Smartphone, 
-  QrCode, 
   Wifi, 
   Copy, 
   Check, 
   Sparkles, 
   Apple, 
-  Share2, 
-  PlusSquare, 
-  MoreVertical,
-  Download,
-  Globe,
-  UploadCloud,
-  CheckCircle2,
-  ExternalLink
+  Globe, 
+  CheckCircle2, 
+  ExternalLink,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function InstallHpModal({ isOpen, onClose }) {
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState('online'); // default to 'online' since user asked for 24/7 without laptop!
   
-  // Local IP address detected
-  const [localIp, setLocalIp] = useState('10.201.133.121');
-  const port = '5173';
-  const localUrl = `http://${localIp}:${port}`;
+  // Permanent public HTTPS URL on GitHub Pages (Official 24/7 Hosting)
+  const publicUrl = "https://asesmenhargiappbdg.github.io/ngomongyuk/";
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(publicUrl)}&margin=10`;
 
   if (!isOpen) return null;
 
-  const handleCopy = (text) => {
-    navigator.clipboard.writeText(text);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(publicUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(localUrl)}&margin=10`;
-
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/65 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div className="bg-white rounded-3xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in duration-200">
         {/* Header */}
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-indigo-50/80 to-purple-50/60">
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-emerald-50 via-teal-50 to-white">
           <div className="flex items-center gap-3">
-            <span className="p-2.5 bg-indigo-600 text-white rounded-2xl shadow-sm">
-              <Smartphone className="w-5 h-5" />
+            <span className="p-2.5 bg-emerald-600 text-white rounded-2xl shadow-sm">
+              <Globe className="w-5 h-5" />
             </span>
             <div>
-              <h3 className="font-extrabold text-slate-800 text-lg sm:text-xl">
-                Pasang di HP (Aktif 24 Jam)
-              </h3>
+              <div className="flex items-center gap-1.5">
+                <h3 className="font-extrabold text-slate-800 text-lg sm:text-xl">
+                  Aplikasi Sudah Online 24 Jam
+                </h3>
+                <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                  Aktif
+                </span>
+              </div>
               <p className="text-xs text-slate-500">
-                Pilih cara paling nyaman agar aplikasi tetap aktif meski laptop mati
+                Laptop boleh dimatikan, aplikasi di HP tetap aktif selamanya!
               </p>
             </div>
           </div>
@@ -63,148 +59,107 @@ export default function InstallHpModal({ isOpen, onClose }) {
           </button>
         </div>
 
-        {/* Tab Selector */}
-        <div className="flex border-b border-slate-100 bg-slate-50/70 p-1.5 gap-1.5">
-          <button
-            onClick={() => setActiveTab('online')}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
-              activeTab === 'online'
-                ? "bg-white text-indigo-700 shadow-sm border border-slate-200/60"
-                : "text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            <Globe className="w-3.5 h-3.5" />
-            <span>Online 24 Jam (Komputer Mati OK)</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('wifi')}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
-              activeTab === 'wifi'
-                ? "bg-white text-indigo-700 shadow-sm border border-slate-200/60"
-                : "text-slate-500 hover:text-slate-800"
-            }`}
-          >
-            <Wifi className="w-3.5 h-3.5" />
-            <span>Via Wi-Fi Lokal (Saat Laptop Nyala)</span>
-          </button>
-        </div>
-
-        {/* Scrollable Content */}
+        {/* Content */}
         <div className="p-5 sm:p-6 overflow-y-auto space-y-5">
-          {activeTab === 'online' ? (
-            /* TAB 1: ONLINE 24 JAM PERMANEN */
-            <div className="space-y-4">
-              <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200/70 text-xs text-emerald-950 leading-relaxed">
-                <div className="flex items-start gap-2.5">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                  <div>
-                    <strong>Solusi Terbaik Tanpa Bergantung Laptop:</strong>
-                    <p className="mt-0.5 text-emerald-900/80">
-                      Dengan meng-upload ke hosting gratis, aplikasi Anda akan memiliki alamat web permanen di internet. Komputer dimatikan total pun, aplikasi di HP Anda tetap bisa dibuka dan diinstal selamanya!
-                    </p>
-                  </div>
+          {/* Status Alert */}
+          <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200/80 flex items-start gap-3">
+            <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="text-xs text-emerald-950 leading-relaxed">
+              <strong>Server Web Publik Sudah Aktif!</strong>
+              <p className="mt-0.5 text-emerald-900/80">
+                Aplikasi Anda sudah terbit di internet dengan sertifikat keamanan resmi (HTTPS). Anda bisa membukanya dari HP mana pun menggunakan paket data (4G/5G) atau Wi-Fi apa saja.
+              </p>
+            </div>
+          </div>
+
+          {/* QR Code & Link Card */}
+          <div className="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200/80 text-center">
+            <p className="text-xs text-slate-500 font-semibold mb-3">
+              Scan Kamera HP Anda Langsung ke Layar Komputer Ini:
+            </p>
+            
+            <div className="inline-block p-2 bg-white rounded-2xl border border-slate-200 shadow-sm mb-3">
+              <img 
+                src={qrUrl} 
+                alt="QR Code Aplikasi NgomongYuk!" 
+                className="w-44 h-44 rounded-xl object-contain mx-auto"
+              />
+            </div>
+
+            <p className="text-[11px] text-slate-400 mb-2">
+              Atau ketik alamat web ini di browser HP:
+            </p>
+
+            <div className="flex items-center justify-center gap-2 max-w-sm mx-auto">
+              <a
+                href={publicUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm font-mono font-bold text-indigo-700 bg-white px-3 py-1.5 rounded-xl border border-slate-200 hover:text-indigo-800 hover:border-indigo-300 transition-colors flex items-center gap-1.5 shadow-2xs"
+              >
+                <span>{publicUrl}</span>
+                <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+              </a>
+
+              <button
+                onClick={handleCopy}
+                className="p-2 bg-white hover:bg-slate-100 text-slate-700 rounded-xl border border-slate-200 transition-colors shadow-2xs shrink-0"
+                title="Salin Alamat"
+              >
+                {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
+
+            {copied && (
+              <p className="text-xs text-emerald-600 font-bold mt-2 animate-in fade-in">
+                ✓ Alamat berhasil disalin!
+              </p>
+            )}
+          </div>
+
+          {/* Cara Pasang Menjadi Aplikasi di Menu HP */}
+          <div>
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2.5">
+              Cara Pasang Menjadi Aplikasi di Layar HP:
+            </h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              {/* Android */}
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                <div className="flex items-center gap-1.5 font-bold text-slate-800 mb-2">
+                  <span>🤖</span> Di HP Android (Google Chrome):
                 </div>
+                <ol className="text-slate-600 space-y-1 list-decimal list-inside leading-relaxed text-[11px]">
+                  <li>Buka link di Chrome HP.</li>
+                  <li>Ketuk titik tiga (⋮) di pojok kanan atas.</li>
+                  <li>Pilih <strong>"Instal Aplikasi"</strong> atau <strong>"Tambahkan ke Layar Utama"</strong>.</li>
+                  <li>Ikon aplikasi akan muncul di menu HP Anda!</li>
+                </ol>
               </div>
 
-              {/* Cara A: Netlify Drop */}
-              <div className="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200/80">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[11px] font-bold flex items-center justify-center">
-                      A
-                    </span>
-                    Cara Paling Mudah: Netlify Drop (5 Detik)
-                  </h4>
-                  <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md">
-                    Rekomendasi
-                  </span>
+              {/* iPhone */}
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                <div className="flex items-center gap-1.5 font-bold text-slate-800 mb-2">
+                  <Apple className="w-3.5 h-3.5 text-slate-700" /> Di iPhone (Safari):
                 </div>
-                <p className="text-xs text-slate-600 mb-3 leading-relaxed">
-                  Tidak perlu instal apa pun. Cukup klik dua kali file <strong>buka-netlify-drop.bat</strong> di folder laptop Anda, lalu tarik folder <strong>dist</strong> ke halaman web tersebut.
-                </p>
-                <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5 text-xs text-slate-700">
-                  <p>1. Di laptop, klik 2x file: <code className="font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">buka-netlify-drop.bat</code></p>
-                  <p>2. Tarik folder <strong>dist</strong> ke dalam kotak di halaman web yang muncul.</p>
-                  <p>3. Dalam 5 detik, Anda langsung mendapatkan link permanen aktif 24 jam!</p>
-                </div>
-              </div>
-
-              {/* Cara B: upload-ke-web.bat */}
-              <div className="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200/80">
-                <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2 mb-2">
-                  <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[11px] font-bold flex items-center justify-center">
-                    B
-                  </span>
-                  Cara Otomatis via Terminal (Surge.sh)
-                </h4>
-                <p className="text-xs text-slate-600 mb-3 leading-relaxed">
-                  Klik dua kali file <strong>upload-ke-web.bat</strong> di folder laptop Anda. Anda hanya perlu mengetik email & password sembarang sekali saja, dan aplikasi langsung online di internet!
-                </p>
-                <div className="bg-white p-3 rounded-xl border border-slate-200 text-xs text-slate-700">
-                  File shortcut: <code className="font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">upload-ke-web.bat</code>
-                </div>
-              </div>
-
-              {/* Langkah setelah dapat link */}
-              <div className="p-3 bg-indigo-50/70 rounded-xl border border-indigo-100 text-xs text-indigo-900 leading-relaxed">
-                <strong>Setelah dapat link web online:</strong> Buka link tersebut di HP Anda, lalu ketuk <em>"Tambahkan ke Layar Utama" (Instal Aplikasi)</em> di menu Chrome/Safari. Selesai!
+                <ol className="text-slate-600 space-y-1 list-decimal list-inside leading-relaxed text-[11px]">
+                  <li>Buka link di Safari iPhone.</li>
+                  <li>Ketuk tombol <strong>Bagikan (Share)</strong> di bagian bawah layar.</li>
+                  <li>Pilih <strong>"Tambah ke Layar Utama"</strong>.</li>
+                  <li>Ketuk <strong>Tambah</strong>.</li>
+                </ol>
               </div>
             </div>
-          ) : (
-            /* TAB 2: WI-FI LOKAL */
-            <div className="space-y-4">
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
-                  Alamat IP Lokal Komputer Saat Ini:
-                </span>
-                <div className="flex items-center justify-between gap-2 bg-white p-3 rounded-xl border border-slate-200">
-                  <code className="text-sm font-mono font-bold text-indigo-700">
-                    {localUrl}
-                  </code>
-                  <button
-                    onClick={() => handleCopy(localUrl)}
-                    className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors"
-                  >
-                    {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* QR Code */}
-              <div className="text-center bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
-                <p className="text-xs text-slate-500 mb-3">
-                  Scan kamera HP ke QR Code di bawah (pastikan Wi-Fi sama):
-                </p>
-                <img 
-                  src={qrUrl} 
-                  alt="QR Code" 
-                  className="w-36 h-36 rounded-xl mx-auto border border-slate-200 bg-white p-2"
-                />
-              </div>
-
-              {/* How to add to home screen */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                  <strong className="text-slate-800 block mb-1">🤖 Android (Chrome):</strong>
-                  <span>Titik tiga (⋮) &rarr; Tambahkan ke Layar Utama</span>
-                </div>
-                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                  <strong className="text-slate-800 block mb-1">🍏 iPhone (Safari):</strong>
-                  <span>Tombol Bagikan &rarr; Tambah ke Layar Utama</span>
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
 
         {/* Footer */}
         <div className="p-4 border-t border-slate-100 flex justify-end bg-slate-50">
           <button
             onClick={onClose}
-            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-200 transition-all active:scale-95"
+            className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-200 transition-all active:scale-95"
           >
-            Tutup
+            Siap, Saya Buka di HP!
           </button>
         </div>
       </div>
