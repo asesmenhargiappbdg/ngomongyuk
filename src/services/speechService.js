@@ -26,7 +26,6 @@ class SpeechService {
     if (!this.synth || this.voices.length === 0) {
       this.voices = this.synth ? this.synth.getVoices() : [];
     }
-    // Prioritize natural high quality English voices (Google US English, Microsoft Jenny, Samantha, etc.)
     const preferredVoices = this.voices.filter(v => v.lang.startsWith('en'));
     const naturalVoice = preferredVoices.find(v => 
       v.name.includes('Natural') || 
@@ -47,8 +46,6 @@ class SpeechService {
 
   /**
    * Speak English text
-   * @param {string} text - text to speak
-   * @param {Object} options - { rate: 0.85, pitch: 1.0, onStart, onEnd, onError }
    */
   speakEnglish(text, options = {}) {
     if (!this.synth) {
@@ -57,16 +54,14 @@ class SpeechService {
       return;
     }
 
-    // Cancel current speaking
     this.synth.cancel();
 
-    // Clean text for speech
     const cleanText = text.replace(/[*_#`]/g, '').trim();
     if (!cleanText) return;
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = 'en-US';
-    utterance.rate = options.rate || 0.85; // Default friendly slightly slower pace for learners
+    utterance.rate = options.rate || 0.85;
     utterance.pitch = options.pitch || 1.0;
 
     const voice = this.getEnglishVoice();
@@ -92,14 +87,37 @@ class SpeechService {
   }
 
   /**
+   * Explicitly request microphone access via getUserMedia (triggers native Android Chrome permission popup)
+   */
+  async requestMicPermission() {
+    if (typeof navigator !== 'undefined' && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop());
+        return { granted: true };
+      } catch (err) {
+        return { 
+          granted: false, 
+          error: err.name || 'NotAllowedError',
+          message: err.message 
+        };
+      }
+    }
+    return { granted: false, error: 'NotSupported' };
+  }
+
+  /**
    * Initialize speech recognition
    */
   initRecognition(lang = 'id-ID', onResult, onError, onEnd) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition = typeof window !== 'undefined' 
+      ? (window.SpeechRecognition || window.webkitSpeechRecognition) 
+      : null;
+
     if (!SpeechRecognition) {
       return {
         supported: false,
-        error: 'Browser Anda belum mendukung Speech Recognition. Gunakan Google Chrome atau Microsoft Edge.'
+        error: 'Browser Anda belum mendukung Speech Recognition. Gunakan Google Chrome.'
       };
     }
 

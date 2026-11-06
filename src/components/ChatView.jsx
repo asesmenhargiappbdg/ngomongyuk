@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import AudioPlayerButton from './AudioPlayerButton';
 import PronunciationPractice from './PronunciationPractice';
+import MicPermissionModal from './MicPermissionModal';
 import { conversationEngine } from '../services/conversationEngine';
 import { speechService } from '../services/speechService';
 
@@ -28,6 +29,7 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
   const [isLoading, setIsLoading] = useState(false);
   const [practicingSentence, setPracticingSentence] = useState(null);
   const [activeSpeedRate, setActiveSpeedRate] = useState(currentSpeed);
+  const [isMicPermissionOpen, setIsMicPermissionOpen] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -146,7 +148,12 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
       },
       (error) => {
         setIsListening(false);
-        alert('Izin microphone di browser dibutuhkan untuk fitur bicara.');
+        // If error is permission related, open the helpful Android permission guide immediately!
+        if (error === 'not-allowed' || error === 'service-not-allowed' || error?.includes('permission')) {
+          setIsMicPermissionOpen(true);
+        } else {
+          setIsMicPermissionOpen(true);
+        }
       },
       (finalText) => {
         setIsListening(false);
@@ -442,6 +449,15 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
           onClose={() => setPracticingSentence(null)}
         />
       )}
+
+      {/* Android Microphone Permission Modal Guide */}
+      <MicPermissionModal
+        isOpen={isMicPermissionOpen}
+        onClose={() => setIsMicPermissionOpen(false)}
+        onPermissionGranted={() => {
+          handleToggleVoice();
+        }}
+      />
     </div>
   );
 }

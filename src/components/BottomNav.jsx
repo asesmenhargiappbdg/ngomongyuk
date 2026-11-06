@@ -10,7 +10,7 @@ export default function BottomNav({ activeTab, onTabChange, onOpenTips }) {
   ];
 
   return (
-    <nav className="bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 py-1.5 flex items-center justify-around shrink-0 z-30 shadow-lg select-none">
+    <nav className="bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom,0px))] flex items-center justify-around shrink-0 z-30 shadow-lg select-none">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
@@ -31,12 +31,15 @@ export default function BottomNav({ activeTab, onTabChange, onOpenTips }) {
                 : "text-slate-400 hover:text-slate-600 font-medium"
             }`}
           >
-            <div className={`p-1 rounded-xl transition-all ${
-              isActive && !tab.isModal ? "bg-indigo-50" : ""
+            {/* Android Material 3 Pill Indicator */}
+            <div className={`px-4 py-1 rounded-full transition-all duration-200 ${
+              isActive && !tab.isModal 
+                ? "bg-indigo-100 text-indigo-700 scale-105" 
+                : "text-slate-500 hover:bg-slate-100"
             }`}>
               <Icon className="w-5 h-5" />
             </div>
-            <span className="text-[10px] mt-0.5 tracking-tight">
+            <span className="text-[10px] mt-1 tracking-tight font-semibold">
               {tab.label}
             </span>
           </button>

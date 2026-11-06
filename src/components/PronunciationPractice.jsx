@@ -45,7 +45,7 @@ export default function PronunciationPractice({
       },
       (error) => {
         setIsRecording(false);
-        setFeedback('Microphone tidak terdeteksi atau diblokir. Pastikan izin mic di browser aktif ya!');
+        setFeedback('Izin mikrofon belum aktif di Chrome. Ketuk ikon gembok 🔒 di atas browser atau ketuk tombol "Minta Izin" di bawah.');
       },
       (finalText) => {
         setIsRecording(false);
@@ -175,6 +175,24 @@ export default function PronunciationPractice({
           <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
             <span className="text-xs text-slate-400 block mb-0.5">Yang terdengar dari suaramu:</span>
             <span className="text-slate-800 font-semibold italic">"{spokenText}"</span>
+          </div>
+        )}
+
+        {/* Feedback when error or prompt */}
+        {feedback && score === null && (
+          <div className="mt-4 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-center text-xs text-amber-900">
+            <p className="font-semibold mb-2">{feedback}</p>
+            <button
+              onClick={async () => {
+                const res = await speechService.requestMicPermission();
+                if (res.granted) {
+                  setFeedback('Izin mikrofon aktif! Silakan tekan tombol mic.');
+                }
+              }}
+              className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl shadow-xs text-xs transition-all active:scale-95"
+            >
+              Minta Izin Mikrofon
+            </button>
           </div>
         )}
 
