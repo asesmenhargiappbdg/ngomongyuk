@@ -57,7 +57,10 @@ class SpeechService {
     this.synth.cancel();
 
     const cleanText = text.replace(/[*_#`]/g, '').trim();
-    if (!cleanText) return;
+    if (!cleanText) {
+      options.onEnd?.();
+      return;
+    }
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = 'en-US';
@@ -69,13 +72,29 @@ class SpeechService {
       utterance.voice = voice;
     }
 
+    let finished = false;
+    let fallbackTimer = null;
+
+    const finish = () => {
+      if (!finished) {
+        finished = true;
+        if (fallbackTimer) clearTimeout(fallbackTimer);
+        options.onEnd?.();
+      }
+    };
+
     utterance.onstart = () => options.onStart?.();
-    utterance.onend = () => options.onEnd?.();
+    utterance.onend = () => finish();
     utterance.onerror = (e) => {
       console.warn('SpeechSynthesis error:', e);
       options.onError?.(e);
-      options.onEnd?.();
+      finish();
     };
+
+    // Safety fallback: estimate duration based on word count + rate
+    const words = cleanText.split(/\s+/).length;
+    const estimatedDurationMs = Math.max(2500, Math.ceil((words / (utterance.rate || 0.85)) * 900) + 2500);
+    fallbackTimer = setTimeout(finish, estimatedDurationMs);
 
     this.synth.speak(utterance);
   }

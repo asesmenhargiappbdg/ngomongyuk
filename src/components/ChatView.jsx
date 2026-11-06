@@ -103,10 +103,12 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
         id: 'user-' + Date.now(),
         sender: 'user',
         userOriginalText: processedText,
-        english: result.englishTranslation,
+        hasCorrection: result.hasCorrection,
+        correctedEnglish: result.correctedEnglish,
+        correctedMeaning: result.correctedMeaning,
+        correctionTip: result.correctionTip,
         phonetic: result.phonetic,
-        indonesian: result.userOriginalText,
-        vocabulary: result.vocabulary,
+        vocabulary: result.vocabulary || [],
         source: result.source
       };
 
@@ -121,10 +123,23 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
 
       setMessages((prev) => [...prev, userMsg, aiMsg]);
 
-      // Speak AI response automatically with user's preferred speed
-      setTimeout(() => {
-        speechService.speakEnglish(aiMsg.english, { rate: activeSpeedRate });
-      }, 350);
+      // USER REQUIREMENT: "sebelum mereka menjawan jika ada koreksi dia bacakan juga"
+      // If there is a correction, speak the corrected sentence first, wait 550ms, then speak the AI reply!
+      if (userMsg.hasCorrection && userMsg.correctedEnglish) {
+        speechService.speakEnglish(userMsg.correctedEnglish, {
+          rate: activeSpeedRate,
+          onEnd: () => {
+            setTimeout(() => {
+              speechService.speakEnglish(aiMsg.english, { rate: activeSpeedRate });
+            }, 550);
+          }
+        });
+      } else {
+        // No correction, speak AI response directly
+        setTimeout(() => {
+          speechService.speakEnglish(aiMsg.english, { rate: activeSpeedRate });
+        }, 350);
+      }
 
     } catch (err) {
       console.error('Failed to process message:', err);
@@ -225,53 +240,77 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
           >
             {/* USER BUBBLE */}
             {msg.sender === 'user' ? (
-              <div className="max-w-[88%] bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-2xl rounded-tr-xs p-3.5 shadow-sm">
+              <div className="max-w-[92%] sm:max-w-[88%] bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-800 text-white rounded-2xl rounded-tr-xs p-3.5 shadow-md">
                 {/* Original text */}
-                <div className="pb-1.5 mb-1.5 border-b border-indigo-400/30">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-indigo-200 block">
-                    Ucapanmu:
+                <div className="pb-1.5 mb-2 border-b border-indigo-400/30">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-200 block mb-0.5">
+                    🗣️ Ucapan Anda:
                   </span>
-                  <p className="text-xs font-medium text-indigo-50">
+                  <p className="text-xs font-medium text-indigo-100 italic">
                     "{msg.userOriginalText}"
                   </p>
                 </div>
 
                 {/* English Bridge */}
                 <div>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-amber-300 block mb-0.5">
-                    ✨ Cara Bicaranya:
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1 mb-1">
+                    <Sparkles className="w-3 h-3 text-amber-300" />
+                    {msg.hasCorrection ? "Perbaikan Bahasa Inggris Alami:" : "Bahasa Inggris Tepat:"}
                   </span>
-                  <p className="text-sm font-bold text-white leading-snug mb-1.5">
-                    "{msg.english}"
+                  <p className="text-sm sm:text-base font-bold text-white leading-snug mb-2">
+                    "{msg.correctedEnglish || msg.english}"
                   </p>
+
+                  {/* Arti Kalimat Perbaikan dalam Bahasa Indonesia */}
+                  {(msg.correctedMeaning || msg.indonesian) && (
+                    <div className="bg-indigo-950/60 rounded-xl p-2.5 mb-2 border border-emerald-400/30 shadow-inner">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 block mb-0.5 flex items-center gap-1">
+                        <span>🇮🇩</span> Artinya:
+                      </span>
+                      <p className="text-xs font-semibold text-emerald-100 leading-snug">
+                        {msg.correctedMeaning || msg.indonesian}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Tips Koreksi Native */}
+                  {msg.correctionTip && (
+                    <div className="bg-amber-400/10 rounded-xl p-2 mb-2 border border-amber-300/30 text-amber-100 text-[11px] leading-snug flex items-start gap-1.5">
+                      <Lightbulb className="w-3.5 h-3.5 text-amber-300 shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="text-amber-200 block text-[10px] uppercase font-bold">Tips Native:</strong>
+                        <span>{msg.correctionTip}</span>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Phonetic Cara Baca */}
                   {msg.phonetic && (
-                    <div className="bg-indigo-800/80 rounded-lg px-2 py-0.5 text-[11px] text-indigo-100 font-mono inline-block mb-2 border border-indigo-500/40">
-                      <span className="text-amber-300 mr-1 font-sans font-semibold">🗣️</span>
+                    <div className="bg-indigo-900/80 rounded-lg px-2.5 py-1 text-[11px] text-indigo-100 font-mono inline-block mb-2 border border-indigo-500/40">
+                      <span className="text-amber-300 mr-1 font-sans font-semibold">🗣️ Cara Baca:</span>
                       {msg.phonetic}
                     </div>
                   )}
 
                   {/* Audio & Practice Buttons */}
-                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-indigo-400/30">
                     <AudioPlayerButton
-                      text={msg.english}
+                      text={msg.correctedEnglish || msg.english}
                       rate={activeSpeedRate}
-                      label="Dengar"
+                      label="Dengar Perbaikan"
                       size="sm"
-                      className="bg-white/15 text-white hover:bg-white/25 border-white/20 text-[11px] py-1 px-2.5"
+                      className="bg-white/15 text-white hover:bg-white/25 border-white/25 text-[11px] py-1 px-2.5"
                     />
 
                     <button
                       onClick={() => setPracticingSentence({
-                        sentence: msg.english,
+                        sentence: msg.correctedEnglish || msg.english,
                         phonetic: msg.phonetic,
-                        meaning: msg.userOriginalText
+                        meaning: msg.correctedMeaning || msg.indonesian || msg.userOriginalText
                       })}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-400 hover:bg-amber-300 text-amber-950 font-bold rounded-full text-[11px] shadow-2xs active:scale-95"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-400 hover:bg-amber-300 text-amber-950 font-bold rounded-full text-[11px] shadow-2xs active:scale-95 transition-transform"
                     >
-                      <Mic className="w-3 h-3" /> Tirukan!
+                      <Mic className="w-3 h-3" /> Tirukan Perbaikan!
                     </button>
                   </div>
                 </div>
