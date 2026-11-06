@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NgomongYuk</string>
+    <string name="title_activity_main">NgomongYuk</string>
+    <string name="package_name">com.ngomongyuk.app</string>
+    <string name="custom_url_scheme">com.ngomongyuk.app</string>
+</resources>

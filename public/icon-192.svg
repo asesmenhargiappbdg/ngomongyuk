@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="grad192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="48" fill="url(#grad192)" />
+  <circle cx="96" cy="96" r="64" fill="white" opacity="0.1" />
+  <!-- Speech bubble -->
+  <path d="M64 64 h60 c10 0 18 8 18 18 v20 c0 10 -8 18 -18 18 h-36 l-20 16 v-16 h-4 c-10 0 -18 -8 -18 -18 v-20 c0 -10 8 -18 18 -18 z" fill="white" />
+  <!-- Mic -->
+  <rect x="88" y="80" width="16" height="26" rx="8" fill="#4f46e5" />
+  <path d="M80 96 c0 9 7 16 16 16 s16 -7 16 -16" stroke="#4f46e5" stroke-width="4.5" fill="none" stroke-linecap="round" />
+  <line x1="96" y1="112" x2="96" y2="122" stroke="#4f46e5" stroke-width="4.5" stroke-linecap="round" />
+</svg>
