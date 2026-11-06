@@ -136,6 +136,28 @@ export default function SettingsModal({ isOpen, onClose, currentSpeed, onSpeedCh
           )}
         </div>
 
+        {/* App Version & Auto-Update Info */}
+        <div className="mb-4 pt-4 border-t border-slate-100 flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-200/70">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-700">Versi Aplikasi</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full">
+                v1.1.0 Terbaru
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Pembaruan otomatis aktif setiap kali aplikasi dibuka
+            </p>
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-3 py-1.5 bg-white hover:bg-slate-100 text-indigo-700 border border-slate-200 text-xs font-bold rounded-xl shadow-2xs transition-all active:scale-95"
+            title="Muat ulang untuk cek pembaruan"
+          >
+            Cek Update
+          </button>
+        </div>
+
         {/* Footer */}
         <div className="flex justify-end pt-4 border-t border-slate-100">
           <button
