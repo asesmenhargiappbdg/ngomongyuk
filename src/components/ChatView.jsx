@@ -22,7 +22,7 @@ import MicPermissionModal from './MicPermissionModal';
 import { conversationEngine } from '../services/conversationEngine';
 import { speechService } from '../services/speechService';
 
-export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
+export default function ChatView({ activeScenario, currentSpeed, onOpenTips, onOpenSettings }) {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -30,11 +30,16 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
   const [practicingSentence, setPracticingSentence] = useState(null);
   const [activeSpeedRate, setActiveSpeedRate] = useState(currentSpeed);
   const [isMicPermissionOpen, setIsMicPermissionOpen] = useState(false);
+  const [isAiActive, setIsAiActive] = useState(conversationEngine.isAiActive());
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     setActiveSpeedRate(currentSpeed);
   }, [currentSpeed]);
+
+  useEffect(() => {
+    setIsAiActive(conversationEngine.isAiActive());
+  }, []);
 
   // Initial welcome message tailored for storytelling
   useEffect(() => {
@@ -96,8 +101,12 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
     setIsLoading(true);
 
     try {
+      const history = messages.slice(-6).map(m => ({
+        sender: m.sender,
+        text: m.sender === 'user' ? (m.correctedEnglish || m.userOriginalText || m.english) : m.english
+      }));
       const scenarioContext = activeScenario ? activeScenario.title : 'santai dan bercerita seru';
-      const result = await conversationEngine.processMessage(processedText, scenarioContext);
+      const result = await conversationEngine.processMessage(processedText, scenarioContext, history);
 
       const userMsg = {
         id: 'user-' + Date.now(),
@@ -118,8 +127,11 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
         english: result.aiReplyEn,
         indonesian: result.aiReplyId,
         vocabulary: [],
-        suggestedReplies: result.suggestedReplies || [result.suggestedReply || '']
+        suggestedReplies: result.suggestedReplies || [result.suggestedReply || ''],
+        source: result.source
       };
+
+      setIsAiActive(conversationEngine.isAiActive());
 
       setMessages((prev) => [...prev, userMsg, aiMsg]);
 
@@ -216,6 +228,19 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            onClick={onOpenSettings}
+            className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 transition-all ${
+              isAiActive
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                : 'bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100'
+            }`}
+            title={isAiActive ? 'Cloud AI Aktif (Percakapan Bebas)' : 'Mode Percakapan Offline (Klik untuk aktifkan Cloud AI)'}
+          >
+            <Sparkles className="w-3 h-3 text-amber-500" />
+            <span>{isAiActive ? conversationEngine.getAiProviderName() : 'Mode Standar'}</span>
+          </button>
+
           <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-100">
             {activeSpeedRate}x
           </span>
@@ -231,6 +256,26 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
 
       {/* Messages Scroll View (Optimized for Mobile Phone Screen) */}
       <div className="flex-1 overflow-y-auto p-3 space-y-3.5">
+        {/* Banner Panduan Aktifkan AI jika belum aktif */}
+        {!isAiActive && (
+          <div className="bg-gradient-to-r from-amber-500/10 via-indigo-500/10 to-emerald-500/10 border-2 border-indigo-200 rounded-2xl p-3 flex items-center justify-between gap-2.5 shadow-sm">
+            <div className="flex items-start gap-2.5">
+              <span className="p-1.5 bg-indigo-600 text-white rounded-xl shrink-0 mt-0.5">
+                <Sparkles className="w-4 h-4" />
+              </span>
+              <div className="text-[11px] text-slate-800 leading-tight">
+                <span className="font-bold text-indigo-900 block text-xs">Ingin ngobrol bebas topik apa saja dengan AI asli?</span>
+                <p className="text-[11px] text-slate-600 mt-0.5">Saat ini masih di mode template bawaan. Masukkan <strong>Google Gemini / Groq API Key (100% Gratis)</strong> agar AI bisa diajak ngobrol hidup tanpa batas!</p>
+              </div>
+            </div>
+            <button
+              onClick={onOpenSettings}
+              className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shrink-0 transition-all shadow-md active:scale-95 whitespace-nowrap flex items-center gap-1"
+            >
+              <Sparkles className="w-3.5 h-3.5" /> Masukkan AI
+            </button>
+          </div>
+        )}
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -324,8 +369,14 @@ export default function ChatView({ activeScenario, currentSpeed, onOpenTips }) {
                     E
                   </div>
                   <span className="text-[11px] font-bold text-slate-800">Echo</span>
-                  <span className="text-[9px] text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded-full font-semibold">
-                    Native Buddy
+                  <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-semibold ${
+                    msg.source === 'gemini' 
+                      ? 'text-emerald-700 bg-emerald-100/90 border border-emerald-200' 
+                      : msg.source === 'groq'
+                      ? 'text-purple-700 bg-purple-100/90 border border-purple-200'
+                      : 'text-indigo-600 bg-indigo-50'
+                  }`}>
+                    {msg.source === 'gemini' ? '✨ Gemini AI' : msg.source === 'groq' ? '⚡ Groq AI' : 'Smart Buddy'}
                   </span>
                 </div>
 

@@ -1,5 +1,5 @@
 // Service Worker with Network-First Strategy for Instant Auto-Updates + Full Offline Fallback
-const CACHE_NAME = 'ngomongyuk-app-v3';
+const CACHE_NAME = 'ngomongyuk-app-v4';
 
 const ASSETS_TO_CACHE = [
   './',

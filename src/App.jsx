@@ -47,6 +47,7 @@ export default function App() {
               activeScenario={activeScenario}
               currentSpeed={currentSpeed}
               onOpenTips={() => setIsTipsOpen(true)}
+              onOpenSettings={() => setIsSettingsOpen(true)}
             />
           )}
 
